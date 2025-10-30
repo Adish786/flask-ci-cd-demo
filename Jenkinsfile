@@ -3,7 +3,7 @@ pipeline {
     agent any
     
     environment {
-        PROJECT = 'flask-app'
+        PROJECT = 'flask-ci-cd-demo'
         VENV_PATH = "${WORKSPACE}/venv"
     }
     
