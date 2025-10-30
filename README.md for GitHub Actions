@@ -1,0 +1,82 @@
+# Flask Application with GitHub Actions CI/CD
+
+This project demonstrates a CI/CD pipeline for a Flask application using GitHub Actions.
+
+## Workflow Overview
+
+The GitHub Actions workflow includes:
+
+### Triggers
+- **Push to main/staging branches**: Runs tests and deploys to appropriate environment
+- **Pull requests to main**: Runs tests only
+- **Release published**: Deploys to production
+
+### Jobs
+
+1. **Test Job**
+   - Runs on all triggers
+   - Sets up Python environment
+   - Installs dependencies
+   - Runs pytest with coverage
+   - Uploads coverage reports to Codecov
+
+2. **Deploy to Staging**
+   - Runs when pushing to staging branch
+   - Deploys application to staging environment
+   - Performs health checks
+
+3. **Deploy to Production**
+   - Runs when a release is published
+   - Deploys to production environment
+   - Uses environment secrets for security
+
+## Setup Instructions
+
+### 1. Repository Setup
+
+1. Fork this repository
+2. Ensure you have two main branches: `main` and `staging`
+
+### 2. Environment Secrets
+
+Configure the following secrets in your GitHub repository settings under `Settings > Secrets and variables > Actions`:
+
+- `DEPLOY_KEY`: SSH private key for server access
+- `PRODUCTION_SERVER_IP`: IP address of production server
+- `SERVER_USERNAME`: SSH username for deployment
+- `HEROKU_API_KEY`: (Optional) For Heroku deployment
+- `CODECOV_TOKEN`: (Optional) For code coverage reporting
+
+### 3. Branch Protection Rules
+
+Set up branch protection rules for `main` and `staging` branches:
+- Require status checks to pass before merging
+- Require pull request reviews
+- Include administrators
+
+### 4. Deployment Environments
+
+Configure deployment environments in GitHub:
+1. Go to Repository Settings > Environments
+2. Create `staging` and `production` environments
+3. Configure environment-specific secrets and deployment rules
+
+## Local Development
+
+```bash
+# Clone repository
+git clone https://github.com/your-username/flask-app.git
+cd flask-app
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run tests
+pytest
+
+# Run application
+python app.py
