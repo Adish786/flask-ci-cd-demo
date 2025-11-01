@@ -67,3 +67,6 @@ pytest
 
 # Run application
 python app.py
+
+#Additional Details
+https://www.jenkins.io/doc/book/pipeline/docker/
