@@ -70,3 +70,4 @@ python app.py
 
 #Additional Details
 https://www.jenkins.io/doc/book/pipeline/docker/
+https://plugins.jenkins.io/slack/       // slack notification implementation
