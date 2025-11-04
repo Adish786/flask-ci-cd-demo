@@ -5,23 +5,8 @@ on:
     branches: [ main, staging, production ]
   pull_request:
     branches: [ main ]
-  release:
-    types: [published]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'all'
-        type: choice
-        options:
-        - all
-        - staging
-        - production
-
 env:
   PYTHON_VERSION: '3.9'
-  FLASK_ENV: 'production'
 
 jobs:
   test:
@@ -53,64 +38,25 @@ jobs:
         flags: unittests
         name: codecov-umbrella
 
-  deploy-staging:
+  build:
     runs-on: ubuntu-latest
     needs: test
-    if: |
-      github.ref == 'refs/heads/staging' || 
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'staging' || github.event.inputs.environment == 'all'))
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Heroku CLI
-      run: |
-        curl https://cli-assets.heroku.com/install.sh | sh
-        
-    - name: Deploy to Heroku Staging
-      uses: akhileshns/heroku-deploy@v3.12.12
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "your-staging-app-name"  # Replace with your staging app name
-        heroku_email: ${{ secrets.HEROKU_EMAIL }}
-        usedocker: false
-
-    - name: Health Check Staging
-      run: |
-        echo "🏥 Performing health check on staging..."
-        curl -f https://your-staging-app-name.herokuapp.com/ || echo "Health check in progress"
-        echo "✅ Staging deployment completed successfully"
-
-  deploy-production:
-    runs-on: ubuntu-latest
-    needs: test
-    if: |
-      github.ref == 'refs/heads/production' || 
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'production' || github.event.inputs.environment == 'all'))
-    
-    environment:
-      name: production
-      url: https://your-production-app-name.herokuapp.com
-      
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Heroku CLI
-      run: |
-        curl https://cli-assets.heroku.com/install.sh | sh
+        python-version: ${{ env.PYTHON_VERSION }}
         
-    - name: Deploy to Heroku Production
-      uses: akhileshns/heroku-deploy@v3.12.12
-      with:
-        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-        heroku_app_name: "your-production-app-name"  # Replace with your production app name
-        heroku_email: ${{ secrets.HEROKU_EMAIL }}
-        usedocker: false
-
-    - name: Health Check Production
+    - name: Install dependencies
       run: |
-        echo "🏥 Performing health check on production..."
-        curl -f https://your-production-app-name.herokuapp.com/ || echo "Health check in progress"
-        echo "✅ Production deployment completed successfully"
+        pip install -r requirements.txt
+        
+    - name: Build verification
+      run: |
+        echo "✅ Build completed successfully"
+        echo "📦 Application is ready for deployment"
+        python -c "import app; print('App imports successfully')"
