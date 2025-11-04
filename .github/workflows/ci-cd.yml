@@ -12,10 +12,8 @@ on:
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'all'
         type: choice
         options:
-        - all
         - staging
         - production
       force_production:
@@ -80,7 +78,7 @@ jobs:
         
     - name: Deploy to Staging
       run: |
-        echo "🚀 Deploying to staging environment..."
+        echo "Deploying to staging environment..."
         echo "Branch: ${{ github.ref }}"
         echo "Event: ${{ github.event_name }}"
         echo "Input: ${{ github.event.inputs.environment }}"
@@ -88,8 +86,8 @@ jobs:
         
     - name: Health Check Staging
       run: |
-        echo "🏥 Performing health check on staging..."
-        echo "✅ Staging deployment completed successfully"
+        echo "Performing health check on staging..."
+        echo "Staging deployment completed successfully"
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -122,7 +120,7 @@ jobs:
         SERVER_IP: ${{ secrets.PRODUCTION_SERVER_IP }}
         USERNAME: ${{ secrets.SERVER_USERNAME }}
       run: |
-        echo "🚀 Deploying to production..."
+        echo "Deploying to production..."
         echo "Event: ${{ github.event_name }}"
         echo "Input: ${{ github.event.inputs.environment }}"
         echo "Force Production: ${{ github.event.inputs.force_production }}"
@@ -130,5 +128,5 @@ jobs:
         
     - name: Health Check Production
       run: |
-        echo "🏥 Performing health check on production..."
-        echo "✅ Production deployment completed successfully"
+        echo "Performing health check on production..."
+        echo "Production deployment completed successfully"
