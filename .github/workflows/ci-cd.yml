@@ -45,20 +45,32 @@ jobs:
 
       - name: Deploy to Staging
         run: |
-          echo "🚀 Deploying Flask App to Staging Server"
+          echo "🚀 Deploying to Staging"
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@${{ secrets.PRODUCTION_SERVER_IP }} "
-            cd /home/ubuntu/flask-app &&
-            git pull origin staging &&
-            docker stop flask-app-staging || true &&
-            docker rm flask-app-staging || true &&
-            docker build -t flask-app-staging . &&
-            docker run -d --name flask-app-staging -p 5000:5000 flask-app-staging
+            # Clean up old container
+            docker stop flask-staging 2>/dev/null || true
+            docker rm flask-staging 2>/dev/null || true
+            
+            # Create directory and copy files
+            mkdir -p /home/ubuntu/flask-app
+            cd /home/ubuntu/flask-app
           "
-          echo "✅ Staging deployment completed"
+          
+          # Copy files to server
+          scp -o StrictHostKeyChecking=no -r . ${{ secrets.SERVER_USERNAME }}@${{ secrets.PRODUCTION_SSTER_IP }}:/home/ubuntu/flask-app/
+          
+          # Build and run on server
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@${{ secrets.PRODUCTION_SERVER_IP }} "
+            cd /home/ubuntu/flask-app
+            docker build -t flask-staging .
+            docker run -d --name flask-staging -p 5000:5000 flask-staging
+            echo '✅ Staging app running on port 5000'
+          "
 
       - name: Health Check Staging
         run: |
-          echo "🏥 Performing health check on staging..."
+          echo "🏥 Health check staging..."
+          sleep 10
           curl -f http://${{ secrets.PRODUCTION_SERVER_IP }}:5000/ || echo "Health check completed"
 
   deploy-production:
@@ -77,18 +89,30 @@ jobs:
 
       - name: Deploy to Production
         run: |
-          echo "🚀 Deploying Flask App to Production"
+          echo "🚀 Deploying to Production"
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@${{ secrets.PRODUCTION_SERVER_IP }} "
-            cd /home/ubuntu/flask-app &&
-            git pull origin main &&
-            docker stop flask-app-prod || true &&
-            docker rm flask-app-prod || true &&
-            docker build -t flask-app-prod . &&
-            docker run -d --name flask-app-prod -p 80:5000 --restart unless-stopped flask-app-prod
+            # Clean up old container
+            docker stop flask-prod 2>/dev/null || true
+            docker rm flask-prod 2>/dev/null || true
+            
+            # Stop anything using port 80
+            sudo fuser -k 80/tcp 2>/dev/null || true
           "
-          echo "✅ Production deployment completed"
+          
+          # Copy files to server
+          scp -o StrictHostKeyChecking=no -r . ${{ secrets.SERVER_USERNAME }}@${{ secrets.PRODUCTION_SERVER_IP }}:/home/ubuntu/flask-prod/
+          
+          # Build and run on server
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@${{ secrets.PRODUCTION_SERVER_IP }} "
+            mkdir -p /home/ubuntu/flask-prod
+            cd /home/ubuntu/flask-prod
+            docker build -t flask-prod .
+            docker run -d --name flask-prod -p 80:5000 --restart unless-stopped flask-prod
+            echo '✅ Production app running on port 80'
+          "
 
       - name: Health Check Production
         run: |
-          echo "🏥 Performing health check on production..."
+          echo "🏥 Health check production..."
+          sleep 10
           curl -f http://${{ secrets.PRODUCTION_SERVER_IP }}/ || echo "Health check completed"
