@@ -18,6 +18,11 @@ on:
         - all
         - staging
         - production
+      force_production:
+        description: 'Force production deployment (for testing)'
+        required: false
+        default: false
+        type: boolean
 
 env:
   PYTHON_VERSION: '3.9'
@@ -79,7 +84,6 @@ jobs:
         echo "Branch: ${{ github.ref }}"
         echo "Event: ${{ github.event_name }}"
         echo "Input: ${{ github.event.inputs.environment }}"
-        # Add your staging deployment commands here
         echo "STAGING_DEPLOYMENT=true" >> $GITHUB_ENV
         
     - name: Health Check Staging
@@ -92,7 +96,8 @@ jobs:
     needs: test
     if: |
       (github.event_name == 'release' && github.event.action == 'published') ||
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'production' || github.event.inputs.environment == 'all'))
+      (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'production' || github.event.inputs.environment == 'all')) ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.force_production == true)
     
     environment:
       name: production
@@ -120,7 +125,7 @@ jobs:
         echo "🚀 Deploying to production..."
         echo "Event: ${{ github.event_name }}"
         echo "Input: ${{ github.event.inputs.environment }}"
-        # Example deployment using SSH
+        echo "Force Production: ${{ github.event.inputs.force_production }}"
         echo "PRODUCTION_DEPLOYMENT=true" >> $GITHUB_ENV
         
     - name: Health Check Production
