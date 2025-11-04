@@ -7,6 +7,16 @@ on:
     branches: [ main ]
   release:
     types: [published]
+  workflow_dispatch:  # Add this for manual triggering
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
 
 env:
   PYTHON_VERSION: '3.9'
@@ -45,7 +55,9 @@ jobs:
   deploy-staging:
     runs-on: ubuntu-latest
     needs: test
-    if: github.ref == 'refs/heads/staging'
+    if: |
+      github.ref == 'refs/heads/staging' || 
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
     
     steps:
     - name: Checkout code
@@ -62,21 +74,25 @@ jobs:
         
     - name: Deploy to Staging
       run: |
-        echo "Deploying to staging environment..."
+        echo "🚀 Deploying to staging environment..."
+        echo "Branch: ${{ github.ref }}"
+        echo "Event: ${{ github.event_name }}"
         # Add your staging deployment commands here
         # Example: rsync, SSH, or cloud provider CLI commands
         echo "STAGING_DEPLOYMENT=true" >> $GITHUB_ENV
         
     - name: Health Check Staging
       run: |
-        echo "Performing health check on staging..."
+        echo "🏥 Performing health check on staging..."
         # Add actual health check command
-        echo "Health check completed"
+        echo "✅ Health check completed"
 
   deploy-production:
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: |
+      (github.event_name == 'release' && github.event.action == 'published') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     
     environment:
       name: production
@@ -101,7 +117,8 @@ jobs:
         SERVER_IP: ${{ secrets.PRODUCTION_SERVER_IP }}
         USERNAME: ${{ secrets.SERVER_USERNAME }}
       run: |
-        echo "Deploying to production..."
+        echo "🚀 Deploying to production..."
+        echo "Event: ${{ github.event_name }}"
         # Example deployment using SSH
         # mkdir -p ~/.ssh
         # echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
@@ -111,6 +128,6 @@ jobs:
         
     - name: Health Check Production
       run: |
-        echo "Performing health check on production..."
+        echo "🏥 Performing health check on production..."
         # Add actual health check command
-        echo "Production deployment completed successfully"
+        echo "✅ Production deployment completed successfully"
